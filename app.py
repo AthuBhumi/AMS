@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, session, url_for, send_file, flash, jsonify ,abort
+from flask import Flask, render_template, redirect, request, session, url_for, send_file, flash, jsonify
 import face_recognition
 import cv2
 import os
@@ -45,16 +45,53 @@ CREDS = Credentials.from_service_account_info(credential_dict , scopes = SCOPE)
 CLIENT = gspread.authorize(CREDS)
 
 ALL_SHEET = CLIENT.open("Attendance_All").sheet1
-TRUSTED_SUBNET = '172.20.0.1'
+
+import subprocess
+import platform
+import sys
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Ensure your .env file is loaded
+
+# Get allowed SSID from environment or fallback default
+ALLOWED_SSID = "iPhone"
+
+def get_connected_ssid():
+    system = platform.system()
+    print(system)
+    try:
+        if system == "Windows":
+            output = subprocess.check_output("netsh wlan show interfaces", shell=True).decode()
+            print(output)
+            for line in output.split("\n"):
+                if "SSID" in line and "BSSID" not in line:
+                    return line.split(":")[1].strip()
+
+        elif system == "Darwin":  # macOS
+            airport_cmd = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
+            output = subprocess.check_output([airport_cmd, "-I"]).decode()
+            for line in output.split("\n"):
+                if " SSID" in line:
+                    return line.split(":")[1].strip()
+
+        elif system == "Linux":
+            output = subprocess.check_output(["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"]).decode()
+            for line in output.split("\n"):
+                if line.startswith("yes:"):
+                    return line.split(":")[1]
+    except Exception as e:
+        print(f"[ERROR] Could not get Wi-Fi SSID: {e}")
+        return None
+
+    return None
 
 
 @app.before_request
-def restrict_access_to_local_network():
-    client_ip = request.remote_addr
-    if not client_ip.startswith(TRUSTED_SUBNET):
-        print(f"Blocked request from: {client_ip}")
-        abort(403)
-
+def check_wifi():
+    ssid = get_connected_ssid()
+    if ssid != ALLOWED_SSID:
+        return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
 
 def load_encodings():
     if os.path.exists(ENCODINGS_FILE):
@@ -674,4 +711,11 @@ def history():
     return render_template('history.html', selected_date=selected_date, attendance_records=attendance_records)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    current_ssid = get_connected_ssid()
+    if current_ssid == ALLOWED_SSID:
+        print(f"✅ Connected to '{current_ssid}'. Starting Flask app...")
+        app.run(debug=True)
+    else:
+        print(f"❌ Access denied. Not connected to allowed Wi-Fi: '{ALLOWED_SSID}'")
+        print(f"📶 Current SSID: '{current_ssid or 'Unknown'}'")
+        sys.exit(1)
