@@ -76,7 +76,7 @@ def get_connected_ssid():
                     return line.split(":")[1].strip()
 
         elif system == "Linux":
-            output = subprocess.check_output(["iwgetid"]).decode()
+            output = subprocess.check_output(["iwconfig"]).decode()
             print(output)
             for line in output.split("\n"):
                 if line.startswith("yes:"):
