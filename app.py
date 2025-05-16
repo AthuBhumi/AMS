@@ -77,6 +77,7 @@ def get_connected_ssid():
 
         elif system == "Linux":
             output = subprocess.check_output(["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"]).decode()
+            print(output)
             for line in output.split("\n"):
                 if line.startswith("yes:"):
                     return line.split(":")[1]
