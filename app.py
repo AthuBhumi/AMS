@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, session, url_for, send_file, flash, jsonify
+from flask import Flask, render_template, redirect, request, session, url_for, send_file, flash, jsonify ,abort
 import face_recognition
 import cv2
 import os
@@ -45,6 +45,16 @@ CREDS = Credentials.from_service_account_info(credential_dict , scopes = SCOPE)
 CLIENT = gspread.authorize(CREDS)
 
 ALL_SHEET = CLIENT.open("Attendance_All").sheet1
+TRUSTED_SUBNET = '172.20.0.1'
+
+
+@app.before_request
+def restrict_access_to_local_network():
+    client_ip = request.remote_addr
+    if not client_ip.startswith(TRUSTED_SUBNET):
+        print(f"Blocked request from: {client_ip}")
+        abort(403)
+
 
 def load_encodings():
     if os.path.exists(ENCODINGS_FILE):
