@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel</title>
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --card-bg: rgba(32, 26, 22, 0.7);
+      --text-light: #f8f8f8;
+      --accent: #d7a86e;
+      --coffee: #6f4e37;
+      --danger: #c94c4c;
+      --hover: #ffb74d;
+      --primary: #a9746e;
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --blur: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      transition: all 0.25s ease-in-out;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-dark);
+      font-family: 'Segoe UI', sans-serif;
+      color: var(--text-light);
+      padding: 30px;
+      background: linear-gradient(to right, #1f1b18, #2c1f1a);
+    }
+
+    h1, h2 {
+      text-align: center;
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+    }
+
+    h1 {
+      color: var(--accent);
+      margin-bottom: 40px;
+      font-size: 2.5rem;
+    }
+
+    h2 {
+      color: var(--hover);
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 25px;
+      margin: 40px 0;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(var(--blur));
+      -webkit-backdrop-filter: blur(var(--blur));
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeSlideIn 0.8s ease forwards;
+      animation-delay: 0.3s;
+    }
+
+    @keyframes fadeSlideIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+
+    th, td {
+      padding: 14px 18px;
+      border: 1px solid var(--glass-border);
+    }
+
+    th {
+      background-color: var(--coffee);
+      color: #fff;
+      text-shadow: 0 0 2px #000;
+    }
+
+    tr:nth-child(even) {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    tr:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    button:hover {
+      background-color: var(--hover);
+      color: #000;
+      transform: scale(1.05);
+      box-shadow: 0 0 10px var(--hover), 0 0 20px var(--hover);
+    }
+
+    button:active {
+      transform: scale(0.96);
+      box-shadow: none;
+    }
+
+    .logout-btn {
+      background-color: var(--danger);
+      position: fixed;
+      top: 20px;
+      right: 20px;
+    }
+
+    .delete-btn {
+      background-color: var(--danger);
+    }
+
+    .download-btn {
+      background-color: #43a047;
+    }
+
+    .history-btn {
+      background-color: #8e24aa;
+    }
+
+    .action-btn {
+      background: linear-gradient(to right, #a9746e, #8d6e63);
+      box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+    }
+
+    .action-btn:hover {
+      background: linear-gradient(to right, #ffb74d, #e0a96d);
+      color: #000;
+      box-shadow: 0 6px 18px rgba(255, 183, 77, 0.4);
+      transform: scale(1.05);
+    }
+
+    input[type="text"], input[type="time"], select {
+      padding: 10px;
+      margin: 5px 4px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: white;
+    }
+
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.8);
+      cursor: pointer;
+    }
+
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    input[type="text"]:focus, input[type="time"]:focus, select:focus {
+      outline: none;
+      border-color: var(--hover);
+      box-shadow: 0 0 8px var(--hover);
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    form {
+      display: inline-block;
+    }
+
+    .download-btn:hover, .history-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(100, 255, 100, 0.4);
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      animation: fadeInOut 3s ease-in-out forwards;
+    }
+
+    .notification.success {
+      background-color: #43a047;
+    }
+
+    .notification.error {
+      background-color: var(--danger);
+    }
+
+    @keyframes fadeInOut {
+      0% {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      10% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      90% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Panel</h1>
+  <a href="/logout"><button class="logout-btn">Logout</button></a>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="notification {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- Query Parameter Message -->
+  {% if request.args.get('message') %}
+    <div class="notification success">{{ request.args.get('message') }}</div>
+  {% endif %}
+
+  <!-- Add New User Section -->
+  <div class="card" style="display: flex; flex-direction: column; align-items: center;">
+    <h2>Add New User</h2>
+    <form action="/add_user" method="get">
+      <button type="submit" class="action-btn" style="font-size: 1.1rem; padding: 12px 24px;">
+        ➕ Add User
+      </button>
+    </form>
+    <p style="margin-top: 10px; color: #bbb; font-size: 0.95rem;">
+      Use this to register new employees into the system.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Today's Attendance ({{ today }})</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Check-in</th>
+          <th>Check-out</th>
+          <th>Status</th>
+          <th>Hours Worked</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for name in names %}
+        <tr>
+          <td>{{ name }}</td>
+          <td>{{ initial_data[name].checkin }}</td>
+          <td>{{ initial_data[name].checkout }}</td>
+          <td>{{ initial_data[name].status }}</td>
+          <td>{{ initial_data[name].hours }}</td>
+          <td>
+            {% if initial_data[name].allow_checkout %}
+            <form action="/admin_panel" method="post">
+              <input type="hidden" name="force_checkout" value="{{ name }}">
+              <button type="submit" class="action-btn">Force Checkout</button>
+            </form>
+            {% endif %}
+            <form action="/mark_attendance" method="post">
+              <input type="hidden" name="mark_user" value="{{ name }}">
+              <input type="time" name="checkin_{{ name }}" value="{{ initial_data[name].checkin }}">
+              <input type="time" name="checkout_{{ name }}" value="{{ initial_data[name].checkout }}">
+              <select name="status_{{ name }}">
+                <option value="Present" {% if initial_data[name].status == 'Present' %}selected{% endif %}>Present</option>
+                <option value="Absent" {% if initial_data[name].status == 'Absent' %}selected{% endif %}>Absent</option>
+              </select>
+              <button type="submit" class="action-btn">Mark</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Registered Users</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for name in names %}
+        <tr>
+          <td>{{ name }}</td>
+          <td>
+            <a href="/delete_user?name={{ name }}"><button class="delete-btn">Delete</button></a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="text-align: center;">
+    <a href="/download_attendance"><button class="download-btn">Download Attendance</button></a>
+    <a href="/history"><button class="history-btn">View History</button></a>
+  </div>
+</body>
+</html>

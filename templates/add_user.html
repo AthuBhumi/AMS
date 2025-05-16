@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add User</title>
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --card-bg: rgba(32, 26, 22, 0.7);
+      --text-light: #f8f8f8;
+      --accent: #d7a86e;
+      --coffee: #6f4e37;
+      --danger: #c94c4c;
+      --hover: #ffb74d;
+      --primary: #a9746e;
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --blur: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      transition: all 0.25s ease-in-out;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-dark);
+      font-family: 'Segoe UI', sans-serif;
+      color: var(--text-light);
+      padding: 30px;
+      background: linear-gradient(to right, #1f1b18, #2c1f1a);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      color: var(--accent);
+      text-align: center;
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+      margin-bottom: 40px;
+      font-size: 2.5rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 25px;
+      margin: 40px auto;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(var(--blur));
+      -webkit-backdrop-filter: blur(var(--blur));
+      max-width: 600px;
+      width: 100%;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeSlideIn 0.8s ease forwards;
+      animation-delay: 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    @keyframes fadeSlideIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    label {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: var(--text-light);
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      margin-bottom: 20px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: white;
+      width: 100%;
+      font-size: 1rem;
+    }
+
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--hover);
+      box-shadow: 0 0 8px var(--hover);
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      margin: 10px;
+    }
+
+    button:hover {
+      background-color: var(--hover);
+      color: #000;
+      transform: scale(1.05);
+      box-shadow: 0 0 10px var(--hover), 0 0 20px var(--hover);
+    }
+
+    button:active {
+      transform: scale(0.96);
+      box-shadow: none;
+    }
+
+    button:disabled {
+      background-color: #666;
+      cursor: not-allowed;
+    }
+
+    .back-btn {
+      background-color: #43a047;
+      margin-top: 20px;
+    }
+
+    .back-btn:hover {
+      background-color: #66bb6a;
+      box-shadow: 0 0 10px rgba(100, 255, 100, 0.4);
+    }
+
+    .error-message {
+      background-color: var(--danger);
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: 600;
+      width: 100%;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    video {
+      width: 100%;
+      max-width: 480px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    canvas {
+      display: none;
+    }
+
+    #loading {
+      display: none;
+      color: var(--accent);
+      font-size: 1.1rem;
+      margin-top: 10px;
+    }
+
+    #error {
+      color: var(--danger);
+      font-size: 1rem;
+      margin-top: 10px;
+      display: none;
+    }
+
+    #capture-status {
+      color: var(--text-light);
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Add New User</h1>
+  <div class="card">
+    {% if error %}
+    <div class="error-message">{{ error }}</div>
+    {% endif %}
+    <form id="add-user-form">
+      <label for="name">Enter Name:</label>
+      <input type="text" id="name" name="name" placeholder="Enter user's name" required>
+      <video id="video" autoplay></video>
+      <canvas id="canvas"></canvas>
+      <p id="capture-status">Captured 0/20 images</p>
+      <button type="button" id="capture-btn" class="action-btn">Capture & Register</button>
+      <p id="loading">Processing...</p>
+      <p id="error"></p>
+    </form>
+    <a href="/admin_panel"><button class="back-btn">Back to Admin Panel</button></a>
+  </div>
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureBtn = document.getElementById('capture-btn');
+    const form = document.getElementById('add-user-form');
+    const nameInput = document.getElementById('name');
+    const captureStatus = document.getElementById('capture-status');
+    const loadingP = document.getElementById('loading');
+    const errorP = document.getElementById('error');
+
+    let imageCount = 0;
+    const maxImages = 20;
+    let images = [];
+
+    // Access webcam
+    async function startWebcam() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        video.style.display = 'block';
+      } catch (err) {
+        errorP.textContent = "Error accessing webcam. Please allow camera access and ensure you're using HTTPS.";
+        errorP.style.display = 'block';
+        captureBtn.disabled = true;
+        console.error("Webcam error:", err);
+      }
+    }
+
+    // Capture images
+    async function captureImages() {
+      if (!video.srcObject) {
+        await startWebcam();
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for stream
+      }
+
+      if (video.srcObject && imageCount < maxImages) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        images.push(imageData);
+        imageCount++;
+        captureStatus.textContent = `Captured ${imageCount}/${maxImages} images`;
+        return true;
+      }
+      return false;
+    }
+
+    // Capture button handler
+    captureBtn.addEventListener('click', async () => {
+      if (!nameInput.value.trim()) {
+        errorP.textContent = "Please enter a name.";
+        errorP.style.display = 'block';
+        return;
+      }
+
+      captureBtn.disabled = true;
+      loadingP.style.display = 'block';
+      errorP.style.display = 'none';
+      captureStatus.textContent = `Captured ${imageCount}/${maxImages} images`;
+
+      // Capture up to 20 images
+      while (imageCount < maxImages) {
+        const captured = await captureImages();
+        if (!captured) break;
+        await new Promise(resolve => setTimeout(resolve, 500)); // Delay between captures
+      }
+
+      // Send images to server
+      try {
+        const response = await fetch('/add_user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: nameInput.value, images: images })
+        });
+
+        if (!response.ok) {
+          const result = await response.json();
+          errorP.textContent = result.error || "Error registering user.";
+          errorP.style.display = 'block';
+        } else {
+          // Redirect to admin panel on success
+          window.location.href = '/admin_panel';
+        }
+      } catch (err) {
+        errorP.textContent = "Error processing images. Please try again.";
+        errorP.style.display = 'block';
+        console.error("Capture error:", err);
+      } finally {
+        captureBtn.disabled = false;
+        loadingP.style.display = 'none';
+      }
+    });
+
+    // Start webcam on page load
+    startWebcam();
+
+    // Stop webcam when leaving page
+    window.addEventListener('beforeunload', () => {
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+      }
+    });
+  </script>
+</body>
+</html>

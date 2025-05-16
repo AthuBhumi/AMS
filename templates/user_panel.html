@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Panel</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --card-bg: rgba(32, 26, 22, 0.7);
+            --text-light: #f8f8f8;
+            --accent: #d7a86e;
+            --coffee: #6f4e37;
+            --danger: #c94c4c;
+            --hover: #ffb74d;
+            --primary: #a9746e;
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --blur: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.25s ease-in-out;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-dark);
+            font-family: 'Segoe UI', sans-serif;
+            color: var(--text-light);
+            padding: 30px;
+            background: linear-gradient(to right, #1f1b18, #2c1f1a);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h2 {
+            color: var(--accent);
+            text-align: center;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        p {
+            color: var(--text-light);
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            padding: 25px;
+            margin: 40px auto;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            max-width: 500px;
+            width: 100%;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeSlideIn 0.8s ease forwards;
+            animation-delay: 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        @keyframes fadeSlideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            margin: 10px;
+        }
+
+        button:hover {
+            background-color: var(--hover);
+            color: #000;
+            transform: scale(1.05);
+            box-shadow: 0 0 10px var(--hover), 0 0 20px var(--hover);
+        }
+
+        button:active {
+            transform: scale(0.96);
+            box-shadow: none;
+        }
+
+        button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+
+        .logout-btn {
+            background-color: var(--danger);
+        }
+
+        .logout-btn:hover {
+            background-color: #e57373;
+            box-shadow: 0 0 10px rgba(255, 100, 100, 0.4);
+        }
+
+        .action-btn {
+            background: linear-gradient(to right, #a9746e, #8d6e63);
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(to right, #ffb74d, #e0a96d);
+            color: #000;
+            box-shadow: 0 6px 18px rgba(255, 183, 77, 0.4);
+        }
+
+        video, canvas {
+            display: none;
+        }
+
+        #loading {
+            display: none;
+            color: var(--accent);
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        #error {
+            color: var(--danger);
+            font-size: 1rem;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Welcome <span id="name">{{ name }}</span></h2>
+        <p id="action">{{ action }}</p>
+        <p id="error"></p>
+        {% if action == "Welcome, please start recognition" %}
+        <video id="video" width="640" height="480" autoplay></video>
+        <canvas id="canvas"></canvas>
+        <button id="capture-btn" class="action-btn">Start Recognition</button>
+        <p id="loading">Processing...</p>
+        {% endif %}
+        <form action="/logout">
+            <button type="submit" class="logout-btn">Logout</button>
+        </form>
+    </div>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('capture-btn');
+        const actionP = document.getElementById('action');
+        const nameSpan = document.getElementById('name');
+        const loadingP = document.getElementById('loading');
+        const errorP = document.getElementById('error');
+
+        // Access webcam
+        async function startWebcam() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                errorP.textContent = "Error accessing webcam. Please allow camera access and ensure you're using HTTPS.";
+                errorP.style.display = 'block';
+                captureBtn.disabled = true;
+                console.error("Webcam error:", err);
+            }
+        }
+
+        // Capture image and send to server
+        captureBtn.addEventListener('click', async () => {
+            captureBtn.disabled = true;
+            loadingP.style.display = 'block';
+            actionP.textContent = "Capturing image...";
+            errorP.style.display = 'none';
+
+            // Ensure video feed is ready
+            if (!video.srcObject) {
+                await startWebcam();
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for stream
+            }
+
+            if (video.srcObject) {
+                try {
+                    // Capture image
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+                    // Send to server
+                    const response = await fetch('/user_panel', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: imageData })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server responded with ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    actionP.textContent = result.action;
+                    nameSpan.textContent = result.name;
+
+                    // Hide button on successful check-in/check-out
+                    if (result.action.includes('successfully') || result.action.includes('complete')) {
+                        captureBtn.style.display = 'none';
+                    }
+                } catch (err) {
+                    errorP.textContent = "Error processing image. Please try again.";
+                    errorP.style.display = 'block';
+                    console.error("Capture error:", err);
+                } finally {
+                    captureBtn.disabled = false;
+                    loadingP.style.display = 'none';
+                }
+            } else {
+                errorP.textContent = "Webcam not available. Please check camera settings.";
+                errorP.style.display = 'block';
+                captureBtn.disabled = false;
+                loadingP.style.display = 'none';
+            }
+        });
+
+        // Start webcam on page load
+        if (actionP.textContent === "Welcome, please start recognition") {
+            startWebcam();
+        }
+
+        // Stop webcam when leaving page
+        window.addEventListener('beforeunload', () => {
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>

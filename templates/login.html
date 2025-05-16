@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Attendance Management System</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: url("{{ url_for('static', filename='img/login_background.webp') }}") no-repeat center center fixed;
+      background-size: cover;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .main-heading {
+      font-size: 42px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+      margin-bottom: 20px;
+      margin-top: 0px;
+      opacity: 0;
+      transform: translateY(-30px);
+      animation: fadeSlideIn 1s ease forwards;
+    }
+
+    .login-box {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+      padding: 25px;
+      width: 100%;
+      max-width: 380px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeSlideIn 1.2s ease forwards;
+      animation-delay: 0.5s;
+    }
+
+    .login-box h2 {
+      color: #ffffff;
+      margin-bottom: 15px;
+      text-align: center;
+      margin-top: -20px;
+    }
+
+    .login-box form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .login-box label {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      display: block;
+      color: #fff;
+      text-align: center;
+      width: 100%;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      font-size: 15px;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      backdrop-filter: blur(4px);
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .login-box input:focus {
+      border-color: #00b4d8;
+      background-color: rgba(255, 255, 255, 0.2);
+      outline: none;
+    }
+
+    .login-box button {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #00b4d8, #0077b6);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 183, 255, 0.4);
+    }
+
+    .login-box button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 183, 255, 0.6);
+    }
+
+    @keyframes fadeSlideIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="main-heading">Attendance Management System</div>
+    <div class="login-box">
+      <h2>Login</h2>
+      <form method="post">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required />
+
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
