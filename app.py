@@ -104,6 +104,9 @@ def check_wifi():
     ssid = get_public_ip();
     print(ssid)
 
+    client_ip = request.remote_addr
+
+    print(f"Client IP: {client_ip}")
     final_ip = '.'.join(ssid.split('.')[:3])  
 
 
