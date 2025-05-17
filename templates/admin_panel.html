@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     :root {
       --bg-dark: #121212;
@@ -227,10 +228,49 @@
         transform: translateY(-20px);
       }
     }
+
+
+      .modal-backdrop {
+      backdrop-filter: blur(10px);  /* Blur effect on the background */
+    }
+
+    .modal-content {
+      background-color: black; /* White background for the modal content */
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+      background-color:black; /* Light background for header */
+      border-bottom: 1px solid #ddd;
+    }
+
+    .modal-footer {
+      border-top: 1px solid #ddd;
+    }
+
+    .modal-title {
+      font-weight: bold;
+      color: #ddd;
+    }
+
+    /* Optional: Button styling */
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+    .btn-primary:hover {
+      background-color: #0056b3;
+      border-color: #0056b3;
+    }
+
   </style>
 </head>
 <body>
   <h1>Admin Panel</h1>
+  <button type="button" class="" data-bs-toggle="modal" data-bs-target="#createUserModal">
+      Create New Attendance Login
+    </button>
   <a href="/logout"><button class="logout-btn">Logout</button></a>
 
   <!-- Flash Messages -->
@@ -327,9 +367,39 @@
     </table>
   </div>
 
+  <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createUserModalLabel">Create New User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="POST">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="new_username" class="form-label">Username</label>
+              <input type="text" class="form-control" style="background-color: #000;color:white" id="new_username" name="new_username" required>
+            </div>
+            <div class="mb-3">
+              <label for="new_password" class="form-label">Password</label>
+              <input type="password" style="background-color: #000;color:wheat" class="form-control" id="new_password" name="new_password" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" name="create_user" class="">Create User</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
   <div class="card" style="text-align: center;">
     <a href="/download_attendance"><button class="download-btn">Download Attendance</button></a>
     <a href="/history"><button class="history-btn">View History</button></a>
   </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

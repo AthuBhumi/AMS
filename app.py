@@ -58,6 +58,9 @@ load_dotenv()  # Ensure your .env file is loaded
 # Get allowed SSID from environment or fallback default
 ALLOWED_SSID = "106.211.122.30"
 
+
+# ALLOWED_SSID = "127.0.0.1"
+
 # def get_connected_ssid():
 #     system = platform.system()
 #     print(system)
@@ -88,7 +91,7 @@ ALLOWED_SSID = "106.211.122.30"
 
 #     return None
 
-
+users_db = {}
 
 def get_public_ip():
     try:
@@ -285,35 +288,129 @@ def find_best_match(face_encoding, known_faces, tolerance=0.5, strict_threshold=
     print("No valid match found for face.")
     return None
 
+
+
+# Function to check if the account has expired
+def is_account_expired(username):
+    expiration_time = timedelta(hours=19)  # Account expires after 19 hours
+    user = users_db.get(username)
+    if user:
+        creation_time = user['created_at']
+        if datetime.now() - creation_time > expiration_time:
+            return True
+    return False
+
+# Example login function:
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
 
+        # Hardcode admin user credentials
         if username == 'admin' and password == 'admin123':
             session['user'] = 'admin'
             return redirect('/admin_panel')
-        elif username == 'user' and password == 'user123':
-            session['user'] = 'user'
-            return redirect('/user_panel')
+
+        # Check if the user exists in the users_db for non-admin
+        user = users_db.get(username)
+        if user:
+            # Check if the password is correct and account is not expired
+            if password == user['password']:
+                if is_account_expired(username):
+                    flash("Your account has expired.")
+                    return redirect('/')
+                session['user'] = username
+                return redirect(f'/{username}_panel')
+            else:
+                flash("Invalid username or password.")
         else:
             flash("Invalid username or password.")
-            return redirect('/')
+
+        return redirect('/')
 
     return render_template('login.html')
+
+
+# @app.route('/', methods=['GET', 'POST'])
+# def login():
+#     if request.method == 'POST':
+#         username = request.form['username']
+#         password = request.form['password']
+
+#         if username == 'admin' and password == 'admin123':
+#             session['user'] = 'admin'
+#             return redirect('/admin_panel')
+#         elif username == 'user' and password == 'user123':
+#             session['user'] = 'user'
+#             return redirect('/user_panel')
+#         else:
+#             flash("Invalid username or password.")
+#             return redirect('/')
+
+#     return render_template('login.html')
+
+# @app.route('/admin_panel', methods=['GET', 'POST'])
+# def admin_panel():
+#     if session.get('user') != 'admin':
+#         return redirect('/')
+    
+#     encodings = load_encodings()
+#     names = list(encodings.keys())
+#     attendance = read_attendance_from_sheet()
+#     today = datetime.now().strftime('%d/%m/%Y')
+#     initial_data = {name: {'checkin': '', 'checkout': '', 'status': 'Absent', 'allow_checkout': False, 'hours': ''} for name in names}
+    
+#     todays_attendance = [r for r in attendance if r[1] == today]
+#     for name, date, checkin, checkout, status, hours in todays_attendance:
+#         checkin_formatted = checkin.split(':')[0] + ':' + checkin.split(':')[1] if checkin else ''
+#         checkout_formatted = checkout.split(':')[0] + ':' + checkout.split(':')[1] if checkout else ''
+#         initial_data[name] = {
+#             'checkin': checkin_formatted,
+#             'checkout': checkout_formatted,
+#             'status': status,
+#             'allow_checkout': bool(checkin and not checkout),
+#             'hours': hours
+#         }
+
+#     if request.method == 'POST' and 'force_checkout' in request.form:
+#         name = request.form['force_checkout']
+#         ist_now = datetime.now() + timedelta(hours=5, minutes=30)
+#         now = ist_now.strftime('%H:%M:%S')
+#         for record in todays_attendance:
+#             if record[0] == name and not record[3]:
+#                 record[3] = now
+#                 record[4] = 'Present'
+#         try:
+#             update_sheet(attendance)
+#             flash("Checkout forced successfully.", "success")
+#         except Exception as e:
+#             print(f"Error forcing checkout: {e}")
+#             flash("Network error: Could not update attendance. Please try again.", "error")
+#         return redirect('/admin_panel')
+
+#     return render_template('admin_panel.html', 
+#                           names=names, 
+#                           attendance=todays_attendance,  
+#                           initial_data=initial_data,
+#                           today=today)
+
 
 @app.route('/admin_panel', methods=['GET', 'POST'])
 def admin_panel():
     if session.get('user') != 'admin':
         return redirect('/')
-    
-    encodings = load_encodings()
+
+    # Load attendance data
+    encodings = load_encodings()  # Assuming this loads facial recognition data
     names = list(encodings.keys())
     attendance = read_attendance_from_sheet()
     today = datetime.now().strftime('%d/%m/%Y')
+
+    # Initialize attendance data for today
     initial_data = {name: {'checkin': '', 'checkout': '', 'status': 'Absent', 'allow_checkout': False, 'hours': ''} for name in names}
     
+    # Filter today's attendance
     todays_attendance = [r for r in attendance if r[1] == today]
     for name, date, checkin, checkout, status, hours in todays_attendance:
         checkin_formatted = checkin.split(':')[0] + ':' + checkin.split(':')[1] if checkin else ''
@@ -326,27 +423,48 @@ def admin_panel():
             'hours': hours
         }
 
-    if request.method == 'POST' and 'force_checkout' in request.form:
-        name = request.form['force_checkout']
-        ist_now = datetime.now() + timedelta(hours=5, minutes=30)
-        now = ist_now.strftime('%H:%M:%S')
-        for record in todays_attendance:
-            if record[0] == name and not record[3]:
-                record[3] = now
-                record[4] = 'Present'
-        try:
-            update_sheet(attendance)
-            flash("Checkout forced successfully.", "success")
-        except Exception as e:
-            print(f"Error forcing checkout: {e}")
-            flash("Network error: Could not update attendance. Please try again.", "error")
-        return redirect('/admin_panel')
+    # Handle form submissions
+    if request.method == 'POST':
+        # Check if the admin is creating a new user
+        if 'create_user' in request.form:
+            new_username = request.form['new_username']
+            new_password = request.form['new_password']
+            
+            if new_username and new_password:
+                # Create new user with 19 hours expiration
+                users_db[new_username] = {
+                    'password': new_password,
+                    'created_at': datetime.now()
+                }
+                flash(f"User {new_username} created successfully.", "success")
+            else:
+                flash("Please provide a username and password.", "error")
+
+        # Force checkout functionality
+        elif 'force_checkout' in request.form:
+            name = request.form['force_checkout']
+            ist_now = datetime.now() + timedelta(hours=5, minutes=30)
+            now = ist_now.strftime('%H:%M:%S')
+            for record in todays_attendance:
+                if record[0] == name and not record[3]:
+                    record[3] = now
+                    record[4] = 'Present'
+            try:
+                update_sheet(attendance)
+                flash("Checkout forced successfully.", "success")
+            except Exception as e:
+                print(f"Error forcing checkout: {e}")
+                flash("Network error: Could not update attendance. Please try again.", "error")
+            return redirect('/admin_panel')
 
     return render_template('admin_panel.html', 
                           names=names, 
                           attendance=todays_attendance,  
                           initial_data=initial_data,
                           today=today)
+
+
+
 
 @app.route('/add_user', methods=['GET', 'POST'])
 def add_user():
@@ -596,48 +714,6 @@ def logout():
     session.pop('user', None)
     return redirect('/')
 
-# @app.route('/mark_attendance', methods=['POST'])
-# def mark_attendance():
-#     name = request.form['mark_user']
-#     status = request.form[f'status_{name}']
-#     ist_now = datetime.now() + timedelta(hours=5, minutes=30)
-#     date_str = ist_now.strftime('%d/%m/%Y')
-
-#     checkin = request.form.get(f'checkin_{name}', '').strip()
-#     checkout = request.form.get(f'checkout_{name}', '').strip()
-
-#     attendance = read_attendance_from_sheet()
-#     today_records = [r for r in attendance if r[0] == name and r[1] == date_str]
-#     updated = False
-
-#     if today_records:
-#         last_record = today_records[-1]
-#         if checkin and not last_record[2]:
-#             last_record[2] = checkin + ':00' if checkin else ''
-#             last_record[4] = 'Present'
-#             updated = True
-#         elif checkout and last_record[2] and not last_record[3]:
-#             checkin_time = datetime.strptime(last_record[2], '%H:%M:%S')
-#             time_since_checkin = datetime.now() - datetime.combine(date.today(), checkin_time.time())
-#             if time_since_checkin >= timedelta(hours=7) or session.get('user') == 'admin':
-#                 last_record[3] = checkout + ':00' if checkout else ''
-#                 last_record[4] = 'Present'
-#                 updated = True
-#             else:
-#                 flash("Checkout not allowed yet. Wait 7 hours or contact admin.", "error")
-#                 return redirect('/admin_panel')
-#     else:
-#         attendance.append([name, date_str, checkin + ':00' if checkin else '', checkout + ':00' if checkout else '', 'Present' if checkin else 'Absent', ''])
-
-#     if updated or not today_records:
-#         try:
-#             update_sheet(attendance)
-#         except Exception as e:
-#             print(f"Error in mark_attendance: {e}")
-#             flash("Network error: Could not update attendance. Please try again.", "error")
-#             return redirect('/admin_panel')
-
-#     return redirect('/admin_panel')
 
 from datetime import datetime, date, timedelta
 
@@ -752,6 +828,21 @@ def history():
 
     return render_template('history.html', selected_date=selected_date, attendance_records=attendance_records)
 
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8000, debug=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
 # if __name__ == '__main__':
 #     current_ssid = get_connected_ssid()
 #     if current_ssid == ALLOWED_SSID:
@@ -761,5 +852,47 @@ def history():
 #         print(f"❌ Access denied. Not connected to allowed Wi-Fi: '{ALLOWED_SSID}'")
 #         print(f"📶 Current SSID: '{current_ssid or 'Unknown'}'")
 #         sys.exit(1)
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True)
+
+
+# @app.route('/mark_attendance', methods=['POST'])
+# def mark_attendance():
+#     name = request.form['mark_user']
+#     status = request.form[f'status_{name}']
+#     ist_now = datetime.now() + timedelta(hours=5, minutes=30)
+#     date_str = ist_now.strftime('%d/%m/%Y')
+
+#     checkin = request.form.get(f'checkin_{name}', '').strip()
+#     checkout = request.form.get(f'checkout_{name}', '').strip()
+
+#     attendance = read_attendance_from_sheet()
+#     today_records = [r for r in attendance if r[0] == name and r[1] == date_str]
+#     updated = False
+
+#     if today_records:
+#         last_record = today_records[-1]
+#         if checkin and not last_record[2]:
+#             last_record[2] = checkin + ':00' if checkin else ''
+#             last_record[4] = 'Present'
+#             updated = True
+#         elif checkout and last_record[2] and not last_record[3]:
+#             checkin_time = datetime.strptime(last_record[2], '%H:%M:%S')
+#             time_since_checkin = datetime.now() - datetime.combine(date.today(), checkin_time.time())
+#             if time_since_checkin >= timedelta(hours=7) or session.get('user') == 'admin':
+#                 last_record[3] = checkout + ':00' if checkout else ''
+#                 last_record[4] = 'Present'
+#                 updated = True
+#             else:
+#                 flash("Checkout not allowed yet. Wait 7 hours or contact admin.", "error")
+#                 return redirect('/admin_panel')
+#     else:
+#         attendance.append([name, date_str, checkin + ':00' if checkin else '', checkout + ':00' if checkout else '', 'Present' if checkin else 'Absent', ''])
+
+#     if updated or not today_records:
+#         try:
+#             update_sheet(attendance)
+#         except Exception as e:
+#             print(f"Error in mark_attendance: {e}")
+#             flash("Network error: Could not update attendance. Please try again.", "error")
+#             return redirect('/admin_panel')
+
+#     return redirect('/admin_panel')
