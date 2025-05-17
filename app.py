@@ -723,6 +723,10 @@ def history():
 if __name__ == '__main__':
     # current_ssid = get_connected_ssid()
     public_ip = get_public_ip()
+
+    print(public_ip)
+
+    
     print(f"Public IP of this deployment: {public_ip}")
     if public_ip == ALLOWED_SSID:
         print(f"✅ Connected to '{public_ip}'. Starting Flask app...")
