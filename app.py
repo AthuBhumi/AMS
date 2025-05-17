@@ -33,18 +33,18 @@ IMAGES_DIR = 'images'
 # CLIENT = gspread.authorize(CREDS)
 
 # Google Sheets setup
-# SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-# # CREDS = ServiceAccountCredentials.from_json_keyfile_name('attendance-sheets-credentials.json', SCOPE)
-# if not credential_json:
-#     raise ValueError("GOOGLE_CREDENTIALS environment variable is not set or empty")
+SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+# CREDS = ServiceAccountCredentials.from_json_keyfile_name('attendance-sheets-credentials.json', SCOPE)
+if not credential_json:
+    raise ValueError("GOOGLE_CREDENTIALS environment variable is not set or empty")
 
 
-# credential_dict=json.loads(credential_json)
+credential_dict=json.loads(credential_json)
     
-# CREDS = Credentials.from_service_account_info(credential_dict , scopes = SCOPE)
-# CLIENT = gspread.authorize(CREDS)
+CREDS = Credentials.from_service_account_info(credential_dict , scopes = SCOPE)
+CLIENT = gspread.authorize(CREDS)
 
-# ALL_SHEET = CLIENT.open("Attendance_All").sheet1
+ALL_SHEET = CLIENT.open("Attendance_All").sheet1
 
 import subprocess
 import platform
