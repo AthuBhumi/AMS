@@ -99,25 +99,25 @@ def get_public_ip():
         return f"Error fetching IP: {str(e)}"
 
 
-@app.before_request
-def check_wifi():
-    ssid = get_public_ip();
-    client_ip = request.headers.get('X-Forwarded-For')
+# @app.before_request
+# def check_wifi():
+#     ssid = get_public_ip();
+#     client_ip = request.headers.get('X-Forwarded-For')
     
-    if client_ip:
-        # The 'X-Forwarded-For' can contain multiple IPs if there are multiple proxies, 
-        # so we take the first one (which is usually the original client's IP).
-        client_ip = client_ip.split(',')[0]
-    else:
-        # If the header is not available, fall back to request.remote_addr
-        client_ip = request.remote_addr
+#     if client_ip:
+#         # The 'X-Forwarded-For' can contain multiple IPs if there are multiple proxies, 
+#         # so we take the first one (which is usually the original client's IP).
+#         client_ip = client_ip.split(',')[0]
+#     else:
+#         # If the header is not available, fall back to request.remote_addr
+#         client_ip = request.remote_addr
 
-    print(f"Client IP: {client_ip}")
-    # return None
+#     print(f"Client IP: {client_ip}")
+#     # return None
    
 
-    if client_ip != ALLOWED_SSID:
-        return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
+#     if client_ip != ALLOWED_SSID:
+#         return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
 
 def load_encodings():
     if os.path.exists(ENCODINGS_FILE):
