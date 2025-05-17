@@ -56,7 +56,7 @@ import requests
 load_dotenv()  # Ensure your .env file is loaded
 
 # Get allowed SSID from environment or fallback default
-ALLOWED_SSID = "208.77.246"
+ALLOWED_SSID = "100.64.0.2"
 
 # def get_connected_ssid():
 #     system = platform.system()
@@ -107,12 +107,12 @@ def check_wifi():
     client_ip = request.remote_addr
 
     print(f"Client IP: {client_ip}")
-    final_ip = '.'.join(ssid.split('.')[:3])  
+      
 
 
-    print(final_ip)
+   
 
-    if final_ip != ALLOWED_SSID:
+    if client_ip != ALLOWED_SSID:
         return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
 
 def load_encodings():
