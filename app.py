@@ -66,35 +66,35 @@ def get_public_ip():
     except Exception as e:
         return f"Error fetching IP: {str(e)}"
 
-def get_connected_ssid():
-    system = platform.system()
-    print(system)
-    try:
-        if system == "Windows":
-            output = subprocess.check_output("netsh wlan show interfaces", shell=True).decode()
-            print(output)
-            for line in output.split("\n"):
-                if "SSID" in line and "BSSID" not in line:
-                    return line.split(":")[1].strip()
+# def get_connected_ssid():
+#     system = platform.system()
+#     print(system)
+#     try:
+#         if system == "Windows":
+#             output = subprocess.check_output("netsh wlan show interfaces", shell=True).decode()
+#             print(output)
+#             for line in output.split("\n"):
+#                 if "SSID" in line and "BSSID" not in line:
+#                     return line.split(":")[1].strip()
 
-        elif system == "Darwin":  # macOS
-            airport_cmd = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
-            output = subprocess.check_output([airport_cmd, "-I"]).decode()
-            for line in output.split("\n"):
-                if " SSID" in line:
-                    return line.split(":")[1].strip()
+#         elif system == "Darwin":  # macOS
+#             airport_cmd = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
+#             output = subprocess.check_output([airport_cmd, "-I"]).decode()
+#             for line in output.split("\n"):
+#                 if " SSID" in line:
+#                     return line.split(":")[1].strip()
 
-        elif system == "Linux":
-            output = subprocess.check_output(["iwconfig"]).decode()
-            print(output)
-            for line in output.split("\n"):
-                if line.startswith("yes:"):
-                    return line.split(":")[1]
-    except Exception as e:
-        print(f"[ERROR] Could not get Wi-Fi SSID: {e}")
-        return None
+#         elif system == "Linux":
+#             output = subprocess.check_output(["iwconfig"]).decode()
+#             print(output)
+#             for line in output.split("\n"):
+#                 if line.startswith("yes:"):
+#                     return line.split(":")[1]
+#     except Exception as e:
+#         print(f"[ERROR] Could not get Wi-Fi SSID: {e}")
+#         return None
 
-    return None
+#     return None
 
 
 @app.before_request
