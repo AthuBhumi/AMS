@@ -56,7 +56,7 @@ import requests
 load_dotenv()  # Ensure your .env file is loaded
 
 # Get allowed SSID from environment or fallback default
-ALLOWED_SSID = "106.210.236.246"
+ALLOWED_SSID = "208.77.246.30"
 
 # def get_connected_ssid():
 #     system = platform.system()
