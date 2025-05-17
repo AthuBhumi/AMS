@@ -97,11 +97,11 @@ def get_public_ip():
 #     return None
 
 
-@app.before_request
-def check_wifi():
-    ssid = get_connected_ssid()
-    if ssid != ALLOWED_SSID:
-        return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
+# @app.before_request
+# def check_wifi():
+#     ssid = get_connected_ssid()
+#     if ssid != ALLOWED_SSID:
+#         return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
 
 def load_encodings():
     if os.path.exists(ENCODINGS_FILE):
