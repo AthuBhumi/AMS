@@ -13,6 +13,7 @@ import base64
 from PIL import Image
 from dotenv import load_dotenv
 import json
+import requests
 from google.oauth2.service_account import Credentials
 
 load_dotenv()
@@ -32,19 +33,19 @@ IMAGES_DIR = 'images'
 # CREDS = ServiceAccountCredentials.from_json_keyfile_name('attendance-sheets-credentials.json', SCOPE)
 # CLIENT = gspread.authorize(CREDS)
 
-# Google Sheets setup
-SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-# CREDS = ServiceAccountCredentials.from_json_keyfile_name('attendance-sheets-credentials.json', SCOPE)
-if not credential_json:
-    raise ValueError("GOOGLE_CREDENTIALS environment variable is not set or empty")
+# # Google Sheets setup
+# SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+# # CREDS = ServiceAccountCredentials.from_json_keyfile_name('attendance-sheets-credentials.json', SCOPE)
+# if not credential_json:
+#     raise ValueError("GOOGLE_CREDENTIALS environment variable is not set or empty")
 
 
-credential_dict=json.loads(credential_json)
+# credential_dict=json.loads(credential_json)
     
-CREDS = Credentials.from_service_account_info(credential_dict , scopes = SCOPE)
-CLIENT = gspread.authorize(CREDS)
+# CREDS = Credentials.from_service_account_info(credential_dict , scopes = SCOPE)
+# CLIENT = gspread.authorize(CREDS)
 
-ALL_SHEET = CLIENT.open("Attendance_All").sheet1
+# ALL_SHEET = CLIENT.open("Attendance_All").sheet1
 
 import subprocess
 import platform
@@ -55,7 +56,15 @@ import os
 load_dotenv()  # Ensure your .env file is loaded
 
 # Get allowed SSID from environment or fallback default
-ALLOWED_SSID = "iPhone"
+ALLOWED_SSID = "106.210.237.6"
+def get_public_ip():
+    try:
+        response = requests.get('https://api.ipify.org?format=json')
+        ip = response.json().get('ip')
+        print(ip)
+        return ip
+    except Exception as e:
+        return f"Error fetching IP: {str(e)}"
 
 def get_connected_ssid():
     system = platform.system()
@@ -712,11 +721,13 @@ def history():
     return render_template('history.html', selected_date=selected_date, attendance_records=attendance_records)
 
 if __name__ == '__main__':
-    current_ssid = get_connected_ssid()
-    if current_ssid == ALLOWED_SSID:
-        print(f"✅ Connected to '{current_ssid}'. Starting Flask app...")
+    # current_ssid = get_connected_ssid()
+    public_ip = get_public_ip()
+    print(f"Public IP of this deployment: {public_ip}")
+    if public_ip == ALLOWED_SSID:
+        print(f"✅ Connected to '{public_ip}'. Starting Flask app...")
         app.run(debug=True)
     else:
         print(f"❌ Access denied. Not connected to allowed Wi-Fi: '{ALLOWED_SSID}'")
-        print(f"📶 Current SSID: '{current_ssid or 'Unknown'}'")
+        print(f"📶 Current SSID: '{public_ip or 'Unknown'}'")
         sys.exit(1)
