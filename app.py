@@ -730,7 +730,7 @@ if __name__ == '__main__':
     print(f"Public IP of this deployment: {public_ip}")
     if public_ip == ALLOWED_SSID:
         print(f"✅ Connected to '{public_ip}'. Starting Flask app...")
-        app.run(debug=True)
+        app.run(host='0.0.0.0', port=8000, debug=True)
     else:
         print(f"❌ Access denied. Not connected to allowed Wi-Fi: '{ALLOWED_SSID}'")
         print(f"📶 Current SSID: '{public_ip or 'Unknown'}'")
