@@ -589,7 +589,7 @@ def user_panel():
 
     print(f"Trimmed Client IP: {client_ip_trimmed}")
 
-    if client_ip != ALLOWED_SSID:
+    if client_ip_trimmed != ALLOWED_SSID:
         return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
 
     
