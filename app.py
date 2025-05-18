@@ -436,7 +436,7 @@ def admin_panel():
                     'password': new_password,
                     'created_at': datetime.now()
                 }
-                print(users_db);
+                print(users_db)
                 flash(f"User {new_username} created successfully.", "success")
             else:
                 flash("Please provide a username and password.", "error")
