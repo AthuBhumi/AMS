@@ -294,6 +294,8 @@ def find_best_match(face_encoding, known_faces, tolerance=0.5, strict_threshold=
 def is_account_expired(username):
     expiration_time = timedelta(hours=6)  # Account expires after 19 hours
     user = users_db.get(username)
+
+    print(f"Checking expiration for user {expiration_time}")
     if user:
         creation_time = user['created_at']
         if datetime.now() - creation_time > expiration_time:
