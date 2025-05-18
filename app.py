@@ -56,7 +56,7 @@ import requests
 load_dotenv()  # Ensure your .env file is loaded
 
 # Get allowed SSID from environment or fallback default
-ALLOWED_SSID = "106.211.122.30"
+ALLOWED_SSID = "106.211.122"
 
 
 # ALLOWED_SSID = "127.0.0.1"
@@ -292,7 +292,7 @@ def find_best_match(face_encoding, known_faces, tolerance=0.5, strict_threshold=
 
 # Function to check if the account has expired
 def is_account_expired(username):
-    expiration_time = timedelta(hours=19)  # Account expires after 19 hours
+    expiration_time = timedelta(hours=6)  # Account expires after 19 hours
     user = users_db.get(username)
     if user:
         creation_time = user['created_at']
@@ -436,6 +436,7 @@ def admin_panel():
                     'password': new_password,
                     'created_at': datetime.now()
                 }
+                print(users_db);
                 flash(f"User {new_username} created successfully.", "success")
             else:
                 flash("Please provide a username and password.", "error")
@@ -575,16 +576,17 @@ def add_user():
 @app.route('/user_panel', methods=['GET', 'POST'])
 def user_panel():
     client_ip = request.headers.get('X-Forwarded-For')
-    
+
     if client_ip:
-        # The 'X-Forwarded-For' can contain multiple IPs if there are multiple proxies, 
-        # so we take the first one (which is usually the original client's IP).
-        client_ip = client_ip.split(',')[0]
+        client_ip = client_ip.split(',')[0].strip()
     else:
-        # If the header is not available, fall back to request.remote_addr
         client_ip = request.remote_addr
 
-    print(f"Client IP: {client_ip}")
+# Remove only the last octet
+    ip_segments = client_ip.split('.')
+    client_ip_trimmed = '.'.join(ip_segments[:-1]) if len(ip_segments) == 4 else client_ip
+
+    print(f"Trimmed Client IP: {client_ip_trimmed}")
 
     if client_ip != ALLOWED_SSID:
         return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
