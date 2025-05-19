@@ -577,22 +577,22 @@ def add_user():
 
 @app.route('/user_panel', methods=['GET', 'POST'])
 def user_panel():
-#     client_ip = request.headers.get('X-Forwarded-For')
+    client_ip = request.headers.get('X-Forwarded-For')
 
-#     if client_ip:
-#         client_ip = client_ip.split(',')[0].strip()
-#     else:
-#         client_ip = request.remote_addr
+    if client_ip:
+        client_ip = client_ip.split(',')[0].strip()
+    else:
+        client_ip = request.remote_addr
 
-#     print(f"Client IP: {client_ip}")
-# # Remove only the last octet
-#     ip_segments = client_ip.split('.')
-#     client_ip_trimmed = '.'.join(ip_segments[:-1]) if len(ip_segments) == 4 else client_ip
+    print(f"Client IP: {client_ip}")
+# Remove only the last octet
+    ip_segments = client_ip.split('.')
+    client_ip_trimmed = '.'.join(ip_segments[:-1]) if len(ip_segments) == 4 else client_ip
 
-#     print(f"Trimmed Client IP: {client_ip_trimmed}")
+    print(f"Trimmed Client IP: {client_ip_trimmed}")
 
-#     if client_ip_trimmed != ALLOWED_SSID:
-#         return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
+    if client_ip_trimmed != ALLOWED_SSID:
+        return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
 
     
     if session.get('user') == 'admin' or session.get('user') is None:
