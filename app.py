@@ -323,7 +323,7 @@ def login():
                     flash("Your account has expired.")
                     return redirect('/')
                 session['user'] = username
-                return redirect(f'/{username}_panel')
+                return redirect(f'/user_panel')
             else:
                 flash("Invalid username or password.")
         else:
