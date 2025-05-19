@@ -235,7 +235,7 @@ def update_sheet(attendance):
         raise
 
 def log_attendance(name, action):
-    now = datetime.now()
+    now = datetime.now() + timedelta(hours=5, minutes=30)
     date_str = now.strftime('%d/%m/%Y')
     time_str = now.strftime('%H:%M:%S')
 
