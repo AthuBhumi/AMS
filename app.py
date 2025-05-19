@@ -644,7 +644,7 @@ def user_panel():
                             print(f" for {now} ist today.")
                             noon = datetime.combine(ist_now.date(), datetime.strptime("12:00:00", "%H:%M:%S").time())
                             print(f" for {noon} noon.")
-                            if now > noon:
+                            if now :
                                 action = "Check-in not allowed after 12:00 PM. Please contact the admin."
                             elif log_attendance(name, 'checkin'):
                                 action = 'Checked in successfully'
@@ -657,6 +657,7 @@ def user_panel():
                                 action = 'Attendance complete for today'
                             elif checkin_time and not checkout_time:
                                 time_since_checkin = now - datetime.combine(date.today(), checkin_time.time())
+                                print(f"Time since check-in: {time_since_checkin}") 
                                 if time_since_checkin < timedelta(hours=7):
                                     remaining = timedelta(hours=7) - time_since_checkin
                                     hours, remainder = divmod(remaining.total_seconds(), 3600)
