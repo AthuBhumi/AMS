@@ -644,7 +644,7 @@ def user_panel():
                             print(f" for {now} ist today.")
                             noon = datetime.combine(ist_now.date(), datetime.strptime("12:00:00", "%H:%M:%S").time())
                             print(f" for {noon} noon.")
-                            if now :
+                            if now < noon:
                                 action = "Check-in not allowed after 12:00 PM. Please contact the admin."
                             elif log_attendance(name, 'checkin'):
                                 action = 'Checked in successfully'
