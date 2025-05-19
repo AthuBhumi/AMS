@@ -323,7 +323,7 @@ def login():
                     flash("Your account has expired.")
                     return redirect('/')
                 session['user'] = username
-                return redirect(f'/user_panel')
+                return redirect(f'/{username}_panel')
             else:
                 flash("Invalid username or password.")
         else:
@@ -640,7 +640,10 @@ def user_panel():
                         now = datetime.now() + timedelta(hours=5, minutes=30)
 
                         if not today_records:
+                            print(f" for {now} today.")
+                            print(f" for {now} ist today.")
                             noon = datetime.combine(ist_now.date(), datetime.strptime("12:00:00", "%H:%M:%S").time())
+                            print(f" for {noon} noon.")
                             if now > noon:
                                 action = "Check-in not allowed after 12:00 PM. Please contact the admin."
                             elif log_attendance(name, 'checkin'):
