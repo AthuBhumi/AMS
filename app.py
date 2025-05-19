@@ -56,7 +56,7 @@ import requests
 load_dotenv()  # Ensure your .env file is loaded
 
 # Get allowed SSID from environment or fallback default
-ALLOWED_SSID = "223.185.26"
+ALLOWED_SSID = "223.185.36"
 
 
 # ALLOWED_SSID = "127.0.0.1"
