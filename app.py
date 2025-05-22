@@ -3,7 +3,7 @@ import face_recognition
 import cv2
 import os
 import pickle
-from datetime import datetime, timedelta, date , time
+from datetime import datetime, timedelta, date
 import numpy as np
 import csv
 import gspread
@@ -13,7 +13,6 @@ import base64
 from PIL import Image
 from dotenv import load_dotenv
 import json
-from pytz import timezone
 from google.oauth2.service_account import Credentials
 
 load_dotenv()
@@ -50,7 +49,7 @@ credential_dict=json.loads(credential_json)
 CREDS = Credentials.from_service_account_info(credential_dict , scopes = SCOPE)
 CLIENT = gspread.authorize(CREDS)
 
-ALL_SHEET = CLIENT.open("Nitesh_Bhaiya").sheet1
+ALL_SHEET = CLIENT.open("Attendance_All").sheet1
 
 import subprocess
 import platform
@@ -62,7 +61,7 @@ import requests
 load_dotenv()  # Ensure your .env file is loaded
 
 # Get allowed SSID from environment or fallback default
-ALLOWED_SSID = "223.185.41"
+ALLOWED_SSID = "223.185.39"
 
 
 # ALLOWED_SSID = "127.0.0.1"
@@ -156,13 +155,11 @@ def read_attendance_from_sheet():
                     break
                 date = headers[i].replace(' Attendance', '')
                 time_range = row[i] if i < len(row) else ''
-                expected_checkout = row[i] if i + 1 < len(row) else ''
-                hours = row[i + 2] if i + 1 < len(row) else ''
-                day_status = row[i + 3] if i + 3 < len(row) else ''
+                hours = row[i + 1] if i + 1 < len(row) else ''
                 if time_range:
                     in_time, out_time = parse_time_range(time_range)
                     status = 'Present' if in_time else 'Absent'
-                    attendance.append([name, date, in_time, out_time,status, expected_checkout , hours , day_status])
+                    attendance.append([name, date, in_time, out_time, status, hours])
         return attendance
     except Exception as e:
         print(f"Error in read_attendance_from_sheet: {e}")
@@ -202,23 +199,17 @@ def update_sheet(attendance):
             headers = ['Name']
             for date in sorted(existing_dates):
                 headers.append(f"{date} Attendance")
-                headers.append(f"{date} Checkout")
                 headers.append(f"{date} Hours")
-                headers.append(f"{date} Day Status")
 
         existing_dates = {header.replace(' Attendance', '') for header in headers if header.endswith(' Attendance')}
         for date in set(r[1] for r in attendance):
             if date not in existing_dates:
                 headers.append(f"{date} Attendance")
-                headers.append(f"{date} Checkout")
                 headers.append(f"{date} Hours")
-                headers.append(f"{date} Day Status")
 
         if f"{today} Attendance" not in headers:
             headers.append(f"{today} Attendance")
-            headers.append(f"{today} Checkout")
             headers.append(f"{today} Hours")
-            headers.append(f"{today} Day Status")
 
         all_names = list(load_encodings().keys())
         updated_data = []
@@ -228,24 +219,17 @@ def update_sheet(attendance):
                 date = headers[i].replace(' Attendance', '')
                 time_range = ''
                 hours = ''
-                check_out = ''
-                day_status = ""
-                hours = ''
                 for record in attendance:
                     if record[0] == name and record[1] == date:
                         in_time = record[2] if record[2] else ''
                         out_time = record[3] if record[3] else ''
-                        day_status = record[7] if len(record) > 7 else ''
                         if in_time and out_time:
                             time_range = f"{in_time} - {out_time}"
                             hours = calculate_hours(in_time, out_time)
                         elif in_time:
                             time_range = in_time
-                        check_out = out_time
                 row.append(time_range)
-                row.append(check_out)
                 row.append(hours)
-                row.append(day_status)
             updated_data.append(row)
 
         ALL_SHEET.update('A1', [headers], value_input_option='RAW')
@@ -255,42 +239,8 @@ def update_sheet(attendance):
         print(f"Error in update_sheet: {e}")
         raise
 
-# def log_attendance(name, action):
-#     now = datetime.now() + timedelta(hours=5, minutes=30)
-#     date_str = now.strftime('%d/%m/%Y')
-#     time_str = now.strftime('%H:%M:%S')
-
-#     attendance = read_attendance_from_sheet()
-#     today_records = [r for r in attendance if r[0] == name and r[1] == date_str]
-
-#     if not today_records:
-#         if action == 'checkin':
-#             attendance.append([name, date_str, time_str, '', 'Present', ''])
-#             update_sheet(attendance)
-#             return True
-#     else:
-#         last_record = today_records[-1]
-#         checkin_time = datetime.strptime(last_record[2], '%H:%M:%S') if last_record[2] else None
-#         checkout_time = datetime.strptime(last_record[3], '%H:%M:%S') if last_record[3] else None
-
-#         if action == 'checkout' and checkin_time and not checkout_time:
-#             time_since_checkin = now - datetime.combine(date.today(), checkin_time.time())
-#             if time_since_checkin >= timedelta(hours=7):
-#                 last_record[3] = time_str
-#                 last_record[4] = 'Present'
-#                 update_sheet(attendance)
-#                 return True
-#             return False
-#         elif action == 'checkin' and not checkout_time:
-#             if not checkin_time:
-#                 last_record[2] = time_str
-#                 last_record[4] = 'Present'
-#                 update_sheet(attendance)
-#                 return True
-#     return False
-
 def log_attendance(name, action):
-    now = datetime.now()
+    now = datetime.now() + timedelta(hours=5, minutes=30)
     date_str = now.strftime('%d/%m/%Y')
     time_str = now.strftime('%H:%M:%S')
 
@@ -299,72 +249,33 @@ def log_attendance(name, action):
 
     if not today_records:
         if action == 'checkin':
-            checkin_time = datetime.strptime(time_str, '%H:%M:%S').time()
-            checkin_dt = datetime.combine(datetime.today(), checkin_time)
-            time_10_00 = datetime.combine(datetime.today(), time(10, 0))
-            time_10_30 = datetime.combine(datetime.today(), time(10, 30))
-            time_11_00 = datetime.combine(datetime.today(), time(11, 0))
-            day_status = 'Full Day'
-            expected_checkout = '18:30:00'  # Default 6:30 PM
-
-            print(f'Helo world')
-            if time_10_00 <= checkin_dt < time_10_30:
-                # Check-in between 10:00 and 10:30 → 6:30 PM checkout, Full Day
-                expected_checkout = '18:30:00'
-            elif time_10_30 <= checkin_dt <= time_11_00:
-                # Check-in between 10:31 and 11:00 → 8 hours after check-in, Full Day
-                checkout_dt = checkin_dt + timedelta(hours=8)
-                expected_checkout = checkout_dt.strftime('%H:%M:%S')
-            elif checkin_dt > time_11_00:
-                # Check-in after 11:00 → 6:30 PM checkout, Half Day
-                expected_checkout = '18:30:00'
-                day_status = 'Half Day'
-
-            attendance.append([name, date_str, time_str, '', 'Present', expected_checkout, '', day_status])
+            attendance.append([name, date_str, time_str, '', 'Present', ''])
             update_sheet(attendance)
-            return True, expected_checkout, day_status
+            return True
     else:
         last_record = today_records[-1]
         checkin_time = datetime.strptime(last_record[2], '%H:%M:%S') if last_record[2] else None
         checkout_time = datetime.strptime(last_record[3], '%H:%M:%S') if last_record[3] else None
-        day_status = last_record[7] if len(last_record) > 7 else 'Full Day'
 
         if action == 'checkout' and checkin_time and not checkout_time:
             time_since_checkin = now - datetime.combine(date.today(), checkin_time.time())
-            expected_checkout = datetime.strptime(last_record[5], '%H:%M:%S') if last_record[5] else datetime.strptime('18:30:00', '%H:%M:%S')
             if time_since_checkin >= timedelta(hours=7):
                 last_record[3] = time_str
                 last_record[4] = 'Present'
-                last_record[6] = calculate_hours(last_record[2], time_str)
                 update_sheet(attendance)
-                return True, last_record[6], day_status
-            return False, last_record[5], day_status
+                return True
+            return False
         elif action == 'checkin' and not checkout_time:
             if not checkin_time:
                 last_record[2] = time_str
                 last_record[4] = 'Present'
-                checkin_dt = datetime.strptime(time_str, '%H:%M:%S')
-                time_10_00 = datetime.combine(datetime.today(), time(10, 0))
-                time_10_30 = datetime.combine(datetime.today(), time(10, 30))
-                time_11_00 = datetime.combine(datetime.today(), time(11, 0))
-                day_status = 'Full Day'
-                expected_checkout = '18:30:00'
-
-                if time_10_00 <= checkin_dt < time_10_30:
-                    expected_checkout = '18:30:00'
-                elif time_10_30 <= checkin_dt <= time_11_00:
-                    expected_checkout = (checkin_dt + timedelta(hours=8)).strftime('%H:%M:%S')
-                elif checkin_dt > time_11_00:
-                    expected_checkout = '18:30:00'
-                    day_status = 'Half Day'
-
-                last_record[5] = expected_checkout
-                last_record[7] = day_status
                 update_sheet(attendance)
-                return True, expected_checkout, day_status
-    return False, '', day_status
+                return True
+    return False
 
 
+
+from datetime import datetime, timedelta
 
 ## def log_attendance(name, action):
 ##     # Apply the 5-hour 30-minute time delta (like the first code)
@@ -582,11 +493,11 @@ def admin_panel():
     today = datetime.now().strftime('%d/%m/%Y')
 
     # Initialize attendance data for today
-    initial_data = {name: {'checkin': '', 'checkout': '', 'status': 'Absent', 'allow_checkout': False, 'hours': '', 'checkin_image':None , 'day_status' : "N/A"} for name in names}
+    initial_data = {name: {'checkin': '', 'checkout': '', 'status': 'Absent', 'allow_checkout': False, 'hours': '', 'checkin_image':None} for name in names}
     
     # Filter today's attendance
     todays_attendance = [r for r in attendance if r[1] == today]
-    for name, date, checkin, checkout, status,expected_checkout , hours , day_status in todays_attendance:
+    for name, date, checkin, checkout, status, hours in todays_attendance:
         checkin_formatted = checkin.split(':')[0] + ':' + checkin.split(':')[1] if checkin else ''
         checkout_formatted = checkout.split(':')[0] + ':' + checkout.split(':')[1] if checkout else ''
         initial_data[name] = {
@@ -595,10 +506,8 @@ def admin_panel():
             'status': status,
             'allow_checkout': bool(checkin and not checkout),
             'hours': hours,
-            'checkin_image': get_checkin_image_base64(name, today),
-            'day_status' : day_status if day_status else "N/A"
+            'checkin_image': get_checkin_image_base64(name, today)
         }
-    
 
     # Handle form submissions
     if request.method == 'POST':
@@ -822,22 +731,22 @@ def add_user():
 
 @app.route('/user_panel', methods=['GET', 'POST'])
 def user_panel():
-#     client_ip = request.headers.get('X-Forwarded-For')
+    client_ip = request.headers.get('X-Forwarded-For')
 
-#     if client_ip:
-#         client_ip = client_ip.split(',')[0].strip()
-#     else:
-#         client_ip = request.remote_addr
+    if client_ip:
+        client_ip = client_ip.split(',')[0].strip()
+    else:
+        client_ip = request.remote_addr
 
-#     print(f"Client IP: {client_ip}")
-# # Remove only the last octet
-#     ip_segments = client_ip.split('.')
-#     client_ip_trimmed = '.'.join(ip_segments[:-1]) if len(ip_segments) == 4 else client_ip
+    print(f"Client IP: {client_ip}")
+# Remove only the last octet
+    ip_segments = client_ip.split('.')
+    client_ip_trimmed = '.'.join(ip_segments[:-1]) if len(ip_segments) == 4 else client_ip
 
-#     print(f"Trimmed Client IP: {client_ip_trimmed}")
+    print(f"Trimmed Client IP: {client_ip_trimmed}")
 
-#     if client_ip_trimmed != ALLOWED_SSID:
-#         return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
+    if client_ip_trimmed != ALLOWED_SSID:
+        return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
 
     
     if session.get('user') == 'admin' or session.get('user') is None:
@@ -891,7 +800,6 @@ def user_panel():
                             print(f" for {noon} noon.")
                             if now > noon:
                                 action = "Check-in not allowed after 12:00 PM. Please contact the admin."
-                                log_attendance(name ,'checkin')
                             elif log_attendance(name, 'checkin'):
                                 action = 'Checked in successfully'
                                 image_path = os.path.join(TEMP_CHECKIN_IMAGES_DIR, f"{name}_{today.replace('/', '-')}.jpg")
@@ -1122,53 +1030,12 @@ from datetime import datetime, date, timedelta
 # #     return redirect('/admin_panel')
 
 
-# @app.route('/mark_attendance', methods=['POST'])
-# def mark_attendance():
-#     name = request.form['mark_user']
-#     status = request.form[f'status_{name}']
-#     india = timezone('Asia/Kolkata')  
-#     date_str = datetime.now(india).strftime('%d/%m/%Y')
-#     checkin = request.form.get(f'checkin_{name}', '').strip()
-#     checkout = request.form.get(f'checkout_{name}', '').strip()
-
-#     attendance = read_attendance_from_sheet()
-#     today_records = [r for r in attendance if r[0] == name and r[1] == date_str]
-#     updated = False
-
-#     if today_records:
-#         last_record = today_records[-1]
-#         if checkin and not last_record[2]:
-#             last_record[2] = checkin + ':00' if checkin else ''
-#             last_record[4] = 'Present'
-#             updated = True
-#         elif checkout and last_record[2] and not last_record[3]:
-#             checkin_time = datetime.strptime(last_record[2], '%H:%M:%S')
-#             time_since_checkin = datetime.now(india) - datetime.combine(date.today(), checkin_time.time())
-#             if time_since_checkin >= timedelta(hours=7) or session.get('user') == 'admin':
-#                 last_record[3] = checkout + ':00' if checkout else ''
-#                 last_record[4] = 'Present'
-#                 updated = True
-#             else:
-#                 flash("Checkout not allowed yet. Wait 7 hours or contact admin.", "error")
-#                 return redirect('/admin_panel')
-#     else:
-#         attendance.append([name, date_str, checkin + ':00' if checkin else '', checkout + ':00' if checkout else '', 'Present' if checkin else 'Absent', ''])
-
-#     if updated or not today_records:
-#         try:
-#             update_sheet(attendance)
-#         except Exception as e:
-#             print(f"Error in mark_attendance: {e}")
-#             flash("Network error: Could not update attendance. Please try again.", "error")
-#             return redirect('/admin_panel')
-
-#     return redirect('/admin_panel')
 @app.route('/mark_attendance', methods=['POST'])
 def mark_attendance():
     name = request.form['mark_user']
     status = request.form[f'status_{name}']
-    ist_now = datetime.now() + timedelta(hours=5, minutes=30)
-    date_str = ist_now.strftime('%d/%m/%Y')
+    india = timezone('Asia/Kolkata')  
+    date_str = datetime.now(india).strftime('%d/%m/%Y')
     checkin = request.form.get(f'checkin_{name}', '').strip()
     checkout = request.form.get(f'checkout_{name}', '').strip()
 
@@ -1179,87 +1046,32 @@ def mark_attendance():
     if today_records:
         last_record = today_records[-1]
         if checkin and not last_record[2]:
-            try:
-                checkin_dt = datetime.strptime(checkin + ':00', '%H:%M:%S')
-                time_10_00 = datetime.combine(datetime.today(), time(10, 0))
-                time_10_30 = datetime.combine(datetime.today(), time(10, 30))
-                time_11_00 = datetime.combine(datetime.today(), time(11, 0))
-                day_status = 'Full Day'
-                expected_checkout = '18:30:00'
-                if time_10_00 <= checkin_dt < time_10_30:
-                    expected_checkout = '18:30:00'
-                elif time_10_30 <= checkin_dt <= time_11_00:
-                    expected_checkout = (checkin_dt + timedelta(hours=8)).strftime('%H:%M:%S')
-                elif checkin_dt > time_11_00:
-                    expected_checkout = '18:30:00'
-                    day_status = 'Half Day'
-                last_record[2] = checkin + ':00'
-                last_record[4] = 'Present'
-                last_record[5] = expected_checkout
-                last_record[7] = day_status
-
-                print(f'{day_status} If')
-                updated = True
-            except ValueError:
-                flash("Invalid check-in time format. Use HH:MM.", "error")
-                return redirect('/admin_panel')
+            last_record[2] = checkin + ':00' if checkin else ''
+            last_record[4] = 'Present'
+            updated = True
         elif checkout and last_record[2] and not last_record[3]:
-            try:
-                checkin_time = datetime.strptime(last_record[2], '%H:%M:%S')
-                checkout_dt = datetime.strptime(checkout + ':00', '%H:%M:%S')
-                time_since_checkin = ist_now - datetime.combine(date.today(), checkin_time.time())
-                expected_checkout = datetime.strptime(last_record[5], '%H:%M:%S') if last_record[5] else datetime.strptime('18:30:00', '%H:%M:%S')
-                if time_since_checkin >= timedelta(hours=7) or session.get('user') == 'admin':
-                    last_record[3] = checkout + ':00'
-                    last_record[4] = 'Present'
-                    last_record[6] = calculate_hours(last_record[2], checkout + ':00')
-                    updated = True
-                else:
-                    flash("Checkout not allowed yet. Wait until 7 hours have passed or contact admin.", "error")
-                    return redirect('/admin_panel')
-            except ValueError:
-                flash("Invalid check-out time format. Use HH:MM.", "error")
+            checkin_time = datetime.strptime(last_record[2], '%H:%M:%S')
+            time_since_checkin = datetime.now(india) - datetime.combine(date.today(), checkin_time.time())
+            if time_since_checkin >= timedelta(hours=7) or session.get('user') == 'admin':
+                last_record[3] = checkout + ':00' if checkout else ''
+                last_record[4] = 'Present'
+                updated = True
+            else:
+                flash("Checkout not allowed yet. Wait 7 hours or contact admin.", "error")
                 return redirect('/admin_panel')
     else:
-        try:
-            day_status = 'Full Day'
-            expected_checkout = '18:30:00'
-            checkin_time = checkin + ':00' if checkin else ''
-            checkout_time = checkout + ':00' if checkout else ''
-            print(f'Hello world {checkin}')
-            if checkin:
-                checkin_dt = datetime.strptime(f'{ist_now.strftime("%Y-%m-%d")} {checkin}:00', '%Y-%m-%d %H:%M:%S')
-                time_10_00 = datetime.combine(datetime.today(), time(10, 0))
-                time_10_30 = datetime.combine(datetime.today(), time(10, 30))
-                time_11_00 = datetime.combine(datetime.today(), time(11, 0))
-                print(f'{checkin_dt} If if')
-                if time_10_00 <= checkin_dt < time_10_30:
-                    expected_checkout = '18:30:00'
-                elif time_10_30 <= checkin_dt <= time_11_00:
-                    expected_checkout = (checkin_dt + timedelta(hours=8)).strftime('%H:%M:%S')
-                    print(f'{day_status} If else if')
-                elif checkin_dt > time_11_00:
-                    expected_checkout = '18:30:00'
-                    day_status = 'Half Day'
-                    print(f'{day_status} If5')
-            hours = calculate_hours(checkin_time, checkout_time) if checkin_time and checkout_time else ''
-            # print(f'{day_status} If2')
-            attendance.append([name, date_str, checkin_time, checkout_time, 'Present' if checkin_time else 'Absent', expected_checkout, hours, day_status])
-            updated = True
-        except ValueError:
-            flash("Invalid time format. Use HH:MM for check-in/check-out.", "error")
-            return redirect('/admin_panel')
+        attendance.append([name, date_str, checkin + ':00' if checkin else '', checkout + ':00' if checkout else '', 'Present' if checkin else 'Absent', ''])
 
-    if updated:
+    if updated or not today_records:
         try:
             update_sheet(attendance)
-            flash("Attendance updated successfully.", "success")
         except Exception as e:
             print(f"Error in mark_attendance: {e}")
             flash("Network error: Could not update attendance. Please try again.", "error")
             return redirect('/admin_panel')
 
     return redirect('/admin_panel')
+
 
 @app.route('/download_attendance')
 def download_attendance():
