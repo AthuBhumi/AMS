@@ -61,7 +61,7 @@ import requests
 load_dotenv()  # Ensure your .env file is loaded
 
 # Get allowed SSID from environment or fallback default
-ALLOWED_SSID = "223.185.39"
+ALLOWED_SSID = ("223.185.39", "223.185.37")
 
 
 # ALLOWED_SSID = "127.0.0.1"
@@ -745,7 +745,7 @@ def user_panel():
 
     print(f"Trimmed Client IP: {client_ip_trimmed}")
 
-    if client_ip_trimmed != ALLOWED_SSID:
+    if client_ip_trimmed not in ALLOWED_SSID:
         return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
 
     
