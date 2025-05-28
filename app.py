@@ -49,7 +49,7 @@ credential_dict=json.loads(credential_json)
 CREDS = Credentials.from_service_account_info(credential_dict , scopes = SCOPE)
 CLIENT = gspread.authorize(CREDS)
 
-ALL_SHEET = CLIENT.open("Nitesh_Bhaiya").sheet1
+ALL_SHEET = CLIENT.open("Attendance_All").sheet1
 
 import subprocess
 import platform
@@ -745,7 +745,7 @@ def user_panel():
 
     print(f"Trimmed Client IP: {client_ip_trimmed}")
 
-    if client_ip_trimmed in ALLOWED_SSID:
+    if client_ip_trimmed not in ALLOWED_SSID:
         return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
 
     
