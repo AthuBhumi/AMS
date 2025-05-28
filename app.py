@@ -24,7 +24,7 @@ credential_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
 app = Flask(__name__)
 app.secret_key = 'secret'  # Required for sessions
 
-ENCODINGS_FILE = 'face_encodings.pkl'
+ENCODINGS_FILE = 'face_encodings (1).pkl'
 IMAGES_DIR = 'images'
 TEMP_CHECKIN_IMAGES_DIR = 'temp_checkin_images'
 
@@ -49,7 +49,7 @@ credential_dict=json.loads(credential_json)
 CREDS = Credentials.from_service_account_info(credential_dict , scopes = SCOPE)
 CLIENT = gspread.authorize(CREDS)
 
-ALL_SHEET = CLIENT.open("Attendance_All").sheet1
+ALL_SHEET = CLIENT.open("Nitesh_Bhaiya").sheet1
 
 import subprocess
 import platform
@@ -61,7 +61,7 @@ import requests
 load_dotenv()  # Ensure your .env file is loaded
 
 # Get allowed SSID from environment or fallback default
-ALLOWED_SSID = ("223.185.41", "223.185.37")
+ALLOWED_SSID = ("223.185.42", "223.185.37")
 
 
 # ALLOWED_SSID = "127.0.0.1"
@@ -737,7 +737,7 @@ def user_panel():
         client_ip = client_ip.split(',')[0].strip()
     else:
         client_ip = request.remote_addr
-
+    print(f"Client IP from headers: {client_ip}")   
     print(f"Client IP: {client_ip}")
 # Remove only the last octet
     ip_segments = client_ip.split('.')
@@ -745,7 +745,7 @@ def user_panel():
 
     print(f"Trimmed Client IP: {client_ip_trimmed}")
 
-    if client_ip_trimmed not in ALLOWED_SSID:
+    if client_ip_trimmed in ALLOWED_SSID:
         return "<h3>Access Denied: Connect to the authorized Wi-Fi network to access this site.</h3>", 403
 
     
