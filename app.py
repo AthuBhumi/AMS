@@ -24,7 +24,7 @@ credential_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
 app = Flask(__name__)
 app.secret_key = 'secret'  # Required for sessions
 
-ENCODINGS_FILE = 'face_encodings (1).pkl'
+ENCODINGS_FILE = 'face_encodings.pkl'
 IMAGES_DIR = 'images'
 TEMP_CHECKIN_IMAGES_DIR = 'temp_checkin_images'
 
